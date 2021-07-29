@@ -16,8 +16,8 @@ const router = express.Router();
 app.use(cors());
 app.use(router);
 app.set("view engine", "pug");
-app.listen(3030, () => {
-  console.log("Api Running in 3030 port");
+app.listen(8080, () => {
+  console.log("Api Running in 8080 port");
 });
 
 const apiKey = defaultClient.authentications["api-key"];
@@ -100,7 +100,7 @@ router.post("/", files, async (req, res) => {
               name: "contra-cheque.png",
             },
           ];
-          /* apiInstance.sendTransacEmail(sendSmtpEmail).then(
+          apiInstance.sendTransacEmail(sendSmtpEmail).then(
             function (data) {
               console.log(
                 "API called successfully. Returned data: " +
@@ -111,7 +111,7 @@ router.post("/", files, async (req, res) => {
               console.error(error);
               res.send({ err: "Falha ao enviar os emails" });
             }
-          );*/
+          );
         }
 
         res.send({ message: "Emails Enviados com sucesso" });
