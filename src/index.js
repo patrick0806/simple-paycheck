@@ -95,6 +95,7 @@ router.post("/", files, async (req, res) => {
           if (!email) continue;
 
           const pagina = lineNumber - 2;
+          console.log(pagina);
 
           const file = await fs.readFile(`/tmp/contra-cheque-${pagina}.png`);
           const attachment = file.toString("base64");
@@ -113,7 +114,8 @@ router.post("/", files, async (req, res) => {
               name: "contra-cheque.png",
             },
           ];
-          arrayPromise[lineNumber --] = new Promise(async (res,rej)=>{
+
+          arrayPromise[pagina] = new Promise(async (res,rej)=>{
             apiInstance.sendTransacEmail(sendSmtpEmail).then(
               function (data) {
                 console.log( "API called successfully.");
