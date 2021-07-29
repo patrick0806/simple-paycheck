@@ -1,18 +1,31 @@
-html
+html(lang="pt-br")
     head
+        meta(charset="UTF-8")
         style
-            include ./style.css
+            include ./style.scss
 
     body
-        div.row.extra-pages
-            div.col-12
-                h1="Envio de Contra Cheque"
-            div.col-12
-            form(action="/" method="post" enctype="multipart/form-data")
-                .form-group
-                    label(for='pdf') Selecione o PDF
-                    input#pdf.form-control(name="pdf" type='file',required)
-                .form-group
-                    label(for='excel') Selecione o Excel
-                    input#excel.form-control(name="excel" type='file',required)
-                button.btn.btn-primary(type='submit') Enviar E-mails
+        if successMessages && successMessages.length > 0
+            .successs
+                p E-mails Enviados com sucesso 
+        if errors && errors.length > 0
+            .fail
+                p Falha ao enviar os e-mails
+        
+        
+        .container
+            .card
+                .card-image
+                    h2.card-heading
+                        |Envio de Contra Cheque
+                form.card-form(action="/" method="post" enctype="multipart/form-data")
+                    .input
+                        label.input-label Selecione o PDF
+                    .input
+                        input.input-field(name="pdf" type='file',required)
+                    .input
+                        label.input-label Selecione o Excel
+                    .input
+                        input.input-field(name="excel" type='file',required)
+                    .action
+                        button.action-button(type='submit') Enviar E-mails

@@ -23,6 +23,10 @@ app.use(session({
 	resave: true
 }));
 app.use(flash());
+router.use((req,resp,next)=>{
+  resp.locals.flashMessages = req.flash();
+  next();
+})
 app.use(router);
 app.set("view engine", "pug");
 app.listen(8080, () => {
@@ -113,7 +117,7 @@ router.post("/", files, async (req, res) => {
             apiInstance.sendTransacEmail(sendSmtpEmail).then(
               function (data) {
                 console.log( "API called successfully.");
-                return res(data);
+                return res(true);
               },
               function (error) {
                 console.error(error);
@@ -127,6 +131,7 @@ router.post("/", files, async (req, res) => {
           req.flash("successMessages",[{msg:"E-mails enviados com sucesso"}]);
           return res.redirect("/");
         }).catch(err =>{
+          console.log("falha");
           req.flash("errors", [
             {
               msg: "Não foi possivel enviar os e-mails.",
