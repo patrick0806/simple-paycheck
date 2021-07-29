@@ -6,14 +6,23 @@ const readXlsxFile = require("read-excel-file/node");
 const { format, sub } = require("date-fns");
 const { ptBR } = require("date-fns/locale");
 const SendinBlue = require("sib-api-v3-sdk");
+const session = require('express-session');
 const defaultClient = SendinBlue.ApiClient.instance;
+const flash = require("connect-flash");
 const exec = require("child_process").exec;
 require("dotenv").config();
+
 const cors = require("cors");
 const app = express();
 const router = express.Router();
 
 app.use(cors());
+app.use(session({
+	secret:'happy dog',
+	saveUninitialized: true,
+	resave: true
+}));
+app.use(flash());
 app.use(router);
 app.set("view engine", "pug");
 app.listen(8080, () => {
@@ -49,7 +58,7 @@ router.post("/", files, async (req, res) => {
     console.log("recebi os arquivos");
 
     await cleanUpOldImages();
-
+    
     child = exec(
       `convert -density 300 ${pdf[0].path} -quality 100 -background white -alpha remove -alpha off /tmp/contra-cheque.png`,
       async function (err, stdout, stderr) {
@@ -68,7 +77,7 @@ router.post("/", files, async (req, res) => {
         const dataLegivel = `${nomeDoMes} de ${ano}`;
 
         console.log(`iniciando o envio dos contracheques`);
-
+        const arrayPromise = [];
         for (const row of rows) {
           lineNumber++;
           if (lineNumber === 1) {
@@ -100,30 +109,45 @@ router.post("/", files, async (req, res) => {
               name: "contra-cheque.png",
             },
           ];
-          apiInstance.sendTransacEmail(sendSmtpEmail).then(
-            function (data) {
-              console.log(
-                "API called successfully. Returned data: " +
-                  JSON.stringify(data)
-              );
-            },
-            function (error) {
-              console.error(error);
-              res.send({ err: "Falha ao enviar os emails" });
-            }
-          );
+          arrayPromise[lineNumber --] = new Promise(async (res,rej)=>{
+            apiInstance.sendTransacEmail(sendSmtpEmail).then(
+              function (data) {
+                console.log( "API called successfully.");
+                return res(data);
+              },
+              function (error) {
+                console.error(error);
+                return rej(false);
+              }
+            );
+          })
         }
-
-        res.send({ message: "Emails Enviados com sucesso" });
-        console.log("Todos os emails foram enviados com sucesso");
+        await Promise.all(arrayPromise).then(()=>{
+          console.log("Todos os emails enviados com sucesso");
+          req.flash("successMessages",[{msg:"E-mails enviados com sucesso"}]);
+          return res.redirect("/");
+        }).catch(err =>{
+          req.flash("errors", [
+            {
+              msg: "Não foi possivel enviar os e-mails.",
+            },
+          ]);
+          return res.redirect("/");
+        });
       }
     );
   } catch (err) {
     console.error("-----------------------");
     console.error(err);
     console.error("-----------------------");
-    res.send({ err: "Falha ao separar o PDF" });
+    req.flash("errors", [
+      {
+        msg: "Não foi possivel enviar os e-mails.",
+      },
+    ]);
+    return res.redirect("/");
   }
 });
+
 
 module.exports = router;
