@@ -41,3 +41,8 @@ for this
 
 
 ip do droplet http://147.182.224.46/
+
+Para acesso via SFTP as credenciais são 
+dominio: http://147.182.224.46/
+usuário: root
+senha: a senha que usa para acessar a digitalocean
