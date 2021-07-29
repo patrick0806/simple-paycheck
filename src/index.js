@@ -6,7 +6,7 @@ const readXlsxFile = require("read-excel-file/node");
 const { format, sub } = require("date-fns");
 const { ptBR } = require("date-fns/locale");
 const SendinBlue = require("sib-api-v3-sdk");
-const session = require('express-session');
+const session = require("express-session");
 const defaultClient = SendinBlue.ApiClient.instance;
 const flash = require("connect-flash");
 const exec = require("child_process").exec;
@@ -17,16 +17,18 @@ const app = express();
 const router = express.Router();
 
 app.use(cors());
-app.use(session({
-	secret:'happy dog',
-	saveUninitialized: true,
-	resave: true
-}));
+app.use(
+  session({
+    secret: "happy dog",
+    saveUninitialized: true,
+    resave: true,
+  })
+);
 app.use(flash());
-router.use((req,resp,next)=>{
+router.use((req, resp, next) => {
   resp.locals.flashMessages = req.flash();
   next();
-})
+});
 app.use(router);
 app.set("view engine", "pug");
 app.listen(8080, () => {
@@ -45,9 +47,9 @@ const files = upload.fields([
   { name: "excel", maxCount: 1 },
 ]);
 
-router.get('/',(req,resp)=>{
-    return resp.render(`${__dirname}/views`,{title:'Creche Contra Cheque'});
-})
+router.get("/", (req, resp) => {
+  return resp.render(`${__dirname}/views`, { title: "Creche Contra Cheque" });
+});
 
 async function cleanUpOldImages() {
   try {
@@ -62,7 +64,7 @@ router.post("/", files, async (req, res) => {
     console.log("recebi os arquivos");
 
     await cleanUpOldImages();
-    
+
     child = exec(
       `convert -density 300 ${pdf[0].path} -quality 100 -background white -alpha remove -alpha off /tmp/contra-cheque.png`,
       async function (err, stdout, stderr) {
@@ -70,7 +72,7 @@ router.post("/", files, async (req, res) => {
           console.log(err);
           throw stderr;
         }
-        console.log("passei do execa");
+        console.log("passei do exec");
         const rows = await readXlsxFile(excel[0].path, { sheet: 3 }); // for dev tests comment {sheet:3}
 
         let lineNumber = 0;
@@ -95,7 +97,6 @@ router.post("/", files, async (req, res) => {
           if (!email) continue;
 
           const pagina = lineNumber - 2;
-          console.log(pagina);
 
           const file = await fs.readFile(`/tmp/contra-cheque-${pagina}.png`);
           const attachment = file.toString("base64");
@@ -115,10 +116,10 @@ router.post("/", files, async (req, res) => {
             },
           ];
 
-          arrayPromise[pagina] = new Promise(async (res,rej)=>{
+          arrayPromise[pagina] = new Promise(async (res, rej) => {
             apiInstance.sendTransacEmail(sendSmtpEmail).then(
               function (data) {
-                console.log( "API called successfully.");
+                console.log("API called successfully.");
                 return res(true);
               },
               function (error) {
@@ -126,21 +127,25 @@ router.post("/", files, async (req, res) => {
                 return rej(false);
               }
             );
-          })
+          });
         }
-        await Promise.all(arrayPromise).then(()=>{
-          console.log("Todos os emails enviados com sucesso");
-          req.flash("successMessages",[{msg:"E-mails enviados com sucesso"}]);
-          return res.redirect("/");
-        }).catch(err =>{
-          console.log("falha");
-          req.flash("errors", [
-            {
-              msg: "Não foi possivel enviar os e-mails.",
-            },
-          ]);
-          return res.redirect("/");
-        });
+        await Promise.all(arrayPromise)
+          .then(() => {
+            console.log("Todos os emails enviados com sucesso");
+            req.flash("successMessages", [
+              { msg: "E-mails enviados com sucesso" },
+            ]);
+            return res.redirect("/");
+          })
+          .catch((err) => {
+            console.log("falha");
+            req.flash("errors", [
+              {
+                msg: "Não foi possivel enviar os e-mails.",
+              },
+            ]);
+            return res.redirect("/");
+          });
       }
     );
   } catch (err) {
@@ -155,6 +160,5 @@ router.post("/", files, async (req, res) => {
     return res.redirect("/");
   }
 });
-
 
 module.exports = router;
