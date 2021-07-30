@@ -25,10 +25,13 @@ app.use(
   })
 );
 app.use(flash());
-router.use((req, resp, next) => {
-  resp.locals.flashMessages = req.flash();
+
+app.use(function(req, res, next) {
+  res.locals.successMessages = req.flash('successMessages');
+  res.locals.errors = req.flash('errors');
   next();
 });
+
 app.use(router);
 app.set("view engine", "pug");
 app.listen(8080, () => {
